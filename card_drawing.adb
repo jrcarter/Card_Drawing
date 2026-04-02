@@ -11,15 +11,20 @@ package body Card_Drawing is
    Spacing : constant := Font_Height;
 
    Table    : Ada_GUI.Widget_ID;
+   Canvas   : Ada_GUI.Widget_ID;
    No_Card  : Ada_GUI.Widget_ID; -- Card-sized green rectangle without border
    Empty    : Ada_GUI.Widget_ID; -- Card without text (white rectangle with black border)
    Backside : Ada_GUI.Widget_ID; -- Card back (blue rectangle with black border)
    Outline  : Ada_GUI.Widget_ID; -- Card-sized green rectangle with black border
+   Count    : Natural := 0;
 
    Created : Boolean := False;
 
    function Set_Up return Boolean is
       (Created);
+
+   procedure Counted_Show with Inline;
+   -- Calls Show if Count >= 5
 
    procedure Set_Up (Row          : in     Positive := 1;
                      Column       : in     Positive := 1;
@@ -34,7 +39,12 @@ package body Card_Drawing is
          (Row => Row, Column => Column, Width => Width, Height => Height, Break_Before => Break_Before);
       ID := Table;
       Created := True;
+
+      Canvas := Ada_GUI.New_Graphic_Area
+         (Row => Row, Column => Column, Width => Width, Height => Height, Break_Before => Break_Before);
+      Canvas.Set_Hidden;
       Blank;
+      Show;
 
       No_Card := Ada_GUI.New_Graphic_Area
          (Row => Row, Column => Column, Width => Card_Width, Height => Card_Height, Break_Before => True);
@@ -74,15 +84,26 @@ package body Card_Drawing is
                               Fill_Color => (None => False, Color => Table_Green) );
    end Set_Up;
 
+   procedure Show is
+      -- Empty
+   begin -- Show
+      if Count > 0 then
+         Table.Replace_Pixels (Image => Canvas, X => 0, Y => 0);
+         Count := 0;
+      end if;
+   end Show;
+
    procedure Blank is
       -- Empty
    begin -- Blank
-      Table.Draw_Rectangle (From_X     => 0,
-                            From_Y     => 0,
-                            To_X       => Table.Width - 1,
-                            To_Y       => Table.Height - 1,
-                            Line_Color => (None => False, Color => White),
-                            Fill_Color => (None => False, Color => Table_Green) );
+      Canvas.Draw_Rectangle (From_X     => 0,
+                             From_Y     => 0,
+                             To_X       => Table.Width - 1,
+                             To_Y       => Table.Height - 1,
+                             Line_Color => (None => False, Color => White),
+                             Fill_Color => (None => False, Color => Table_Green) );
+      Count := Count + 1;
+      Counted_Show;
    end Blank;
 
    procedure Draw (Card : in PragmARC.Cards.US.Card_Info; X : in Natural; Y : in Natural) is
@@ -90,7 +111,7 @@ package body Card_Drawing is
 
       use PragmARC;
    begin -- Draw
-      Table.Replace_Pixels (Image => Empty, X => X, Y => Y);
+      Canvas.Replace_Pixels (Image => Empty, X => X, Y => Y);
 
       case Card.Suit is
       when Cards.US.Diamond | Cards.US.Heart =>
@@ -99,31 +120,39 @@ package body Card_Drawing is
          Color := Black;
       end case;
 
-      Table.Draw_Text (X          => X + Spacing / 3,
-                       Y          => Y + Spacing - Spacing / 10,
-                       Text       => Cards.US.Image (Card),
-                       Height     => Font_Height,
-                       Fill_Color => (None => False, Color => Color) );
+      Canvas.Draw_Text (X          => X + Spacing / 3,
+                        Y          => Y + Spacing - Spacing / 10,
+                        Text       => Cards.US.Image (Card),
+                        Height     => Font_Height,
+                        Fill_Color => (None => False, Color => Color) );
+      Count := Count + 1;
+      Counted_Show;
    end Draw;
 
    procedure Erase (X : in Natural; Y : in Natural) is
       -- Empty
    begin -- Erase
-      Table.Replace_Pixels (Image => No_Card, X => X, Y => Y);
+      Canvas.Replace_Pixels (Image => No_Card, X => X, Y => Y);
+      Count := Count + 1;
+      Counted_Show;
    end Erase;
 
    procedure Draw_Back (X : in Natural; Y : in Natural; Label : in PragmARC.Cards.US.Image_String := "  ") is
       -- Empty
    begin -- Draw_Back
-      Table.Replace_Pixels (Image => Backside, X => X, Y => Y);
-      Table.Draw_Text (X => X + Spacing / 3, Y => Y + (3 * Spacing) / 2, Text => Label, Height => Font_Height);
+      Canvas.Replace_Pixels (Image => Backside, X => X, Y => Y);
+      Canvas.Draw_Text (X => X + Spacing / 3, Y => Y + (3 * Spacing) / 2, Text => Label, Height => Font_Height);
+      Count := Count + 1;
+      Counted_Show;
    end Draw_Back;
 
    procedure Draw_Outline (X : in Natural; Y : in Natural; Label : in PragmARC.Cards.US.Image_String := "  ") is
       -- Empty
    begin -- Draw_Outline
-      Table.Replace_Pixels (Image => Outline, X => X, Y => Y);
-      Table.Draw_Text (X => X + Spacing / 3, Y => Y + (3 * Spacing) / 2, Text => Label, Height => Font_Height);
+      Canvas.Replace_Pixels (Image => Outline, X => X, Y => Y);
+      Canvas.Draw_Text (X => X + Spacing / 3, Y => Y + (3 * Spacing) / 2, Text => Label, Height => Font_Height);
+      Count := Count + 1;
+      Counted_Show;
    end Draw_Outline;
 
    procedure Draw_Text (X      : in Natural;
@@ -134,10 +163,20 @@ package body Card_Drawing is
    is
       -- Empty
    begin -- Draw_Text
-      Table.Draw_Text (X          => X + Spacing / 3,
-                       Y          => Y + Spacing - Spacing / 10,
-                       Text       => Text,
-                       Height     => Height,
-                       Fill_Color => (None => False, Color => Color) );
+      Canvas.Draw_Text (X          => X + Spacing / 3,
+                        Y          => Y + Spacing - Spacing / 10,
+                        Text       => Text,
+                        Height     => Height,
+                        Fill_Color => (None => False, Color => Color) );
+      Count := Count + 1;
+      Counted_Show;
    end Draw_Text;
+
+   procedure Counted_Show is
+      -- Empty
+   begin -- Counted_Show
+      if Count > 4 then
+         Show;
+      end if;
+   end Counted_Show;
 end Card_Drawing;

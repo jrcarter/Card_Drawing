@@ -39,6 +39,10 @@ package Card_Drawing is
    -- Fills it with Table_Green
    -- ID is the Widget_ID of the Table
 
+   procedure Show with Pre => Set_Up and Ada_GUI.Set_Up;
+   -- Blank, Draw, Erase, Draw_Back, Draw_Outline, and Draw_Text all act on a hidden buffer; this reduces flickering
+   -- The buffer is copied to the diplayed Table after every fifth operation, or when Show is called
+
    procedure Blank with Pre => Set_Up and Ada_GUI.Set_Up;
    -- Fills the Table with Table_Green
 
